@@ -1,0 +1,13 @@
+/dist/
+/bin/
+/obj/
+/store/
+/tests/
+/*.exe
+/*.pdb
+/*.resources
+/*.msix
+/*.msixbundle
+/*.msixupload
+*.pfx
+*.snk
