@@ -32,6 +32,8 @@ try {
         $metadata = Join-Path $env:WINDIR 'System32\WinMetadata'
         $options += @('/define:STORE_BUILD', '/platform:x64', '/r:System.Runtime.dll', '/r:System.Runtime.WindowsRuntime.dll',
             "/r:$metadata\Windows.ApplicationModel.winmd", "/r:$metadata\Windows.Foundation.winmd")
+    } else {
+        $options += @('/r:System.Net.Http.dll', '/r:System.Runtime.Serialization.dll')
     }
     $catalogLines = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'UiTranslations.txt') -Encoding UTF8)
     $headers = $catalogLines[0].Split('|')

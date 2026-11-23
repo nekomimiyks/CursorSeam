@@ -104,6 +104,13 @@ namespace CursorSeam
                 return new Font(system.Name, size, style, unit);
         }
 
+        internal static Size MeasureText(IDeviceContext graphics, string text, Font font, TextFormatFlags flags, int width = int.MaxValue)
+        {
+            var available = new Size(width, int.MaxValue);
+            return graphics == null ? TextRenderer.MeasureText(text, font, available, flags) :
+                TextRenderer.MeasureText(graphics, text, font, available, flags);
+        }
+
         internal static GraphicsPath Rounded(RectangleF bounds, float radius)
         {
             var path = new GraphicsPath();

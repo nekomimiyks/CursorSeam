@@ -16,15 +16,19 @@ Descarga y ejecuta `CursorSeam-…-Setup.exe` desde la [última versión](https:
 2. Pulsa **Calibrar tamaño** y arrastra un borde o una esquina para ajustar el tamaño físico. Mantén pulsada Mayús al arrastrar para alinear los bordes contiguos.
 3. Pulsa **Guardar ajustes** y mueve el puntero de una pantalla a otra para comprobar el resultado.
 
-## Novedades de la versión 1.1.1
+## Novedades de la versión 1.1.2
 
-CursorSeam sigue el modo claro u oscuro de Windows. Los ajustes incluyen interruptores, un selector de idioma más ancho y botones de copia y restauración. El instalador de GitHub puede cerrar la versión 1.1.1 o posterior durante la actualización. Si actualizas desde la versión 1.1.0 o anterior, cierra CursorSeam en la bandeja del sistema antes de actualizar.
+Se corrigió la superposición de los textos de los interruptores y se ajustó el espaciado de los ajustes. El botón de calibración está en la parte inferior derecha del panel. La edición de GitHub permite buscar actualizaciones e iniciar su instalación desde la aplicación. El instalador ofrece un acceso directo en el escritorio.
 
 ## Copia y restauración de ajustes
 
 Elige **Guardar copia** para guardar un archivo `.cursorseam`. Para restaurar, elige **Restaurar copia**, selecciona el archivo y confirma. Se restauran la disposición, los tamaños físicos, la opción de bandeja y el idioma. Configura el inicio con Windows por separado.
 
 ![Confirmación de restauración de los ajustes](backup.png)
+
+## Búsqueda automática de actualizaciones
+
+Con **Buscar actualizaciones automáticamente** activado, la versión de GitHub busca nuevas versiones al iniciarse y una vez al día mientras siga abierta. Selecciona **Actualizar** para descargar y verificar el instalador y después iniciarlo. El instalador permite elegir si quieres crear un acceso directo en el escritorio.
 
 ## Licencia
 

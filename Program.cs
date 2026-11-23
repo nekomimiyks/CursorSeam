@@ -74,6 +74,17 @@ namespace CursorSeam
             deleteSettings = new BoardButton("DeleteSettings", false), exportSettings = new BoardButton("ExportSettings", false),
             restoreSettings = new BoardButton("RestoreSettings", false);
         private readonly BoardToggle trayPreference = new BoardToggle(), startupPreference = new BoardToggle();
+#if !STORE_BUILD
+        private readonly BoardToggle updatePreference = new BoardToggle();
+        private readonly BoardButton updateAvailable = new BoardButton("InstallUpdate", true) { Visible = false };
+        private readonly Timer updateTimer = new Timer();
+        private readonly UpdateChecker updateChecker = new UpdateChecker();
+        private CancellationTokenSource updateRequest, downloadRequest;
+        private UpdateRelease availableUpdate;
+        private Version notifiedVersion;
+        private bool updateChecksStarted;
+#endif
+        private bool? checkUpdatesPreference;
         private readonly ToolTip startupHelp = new ToolTip();
         private readonly Label languageLabel = MakeLabel();
         private readonly BoardLanguagePicker languageChoice = new BoardLanguagePicker();
@@ -113,6 +124,7 @@ namespace CursorSeam
             this.layoutPath = layoutPath;
             settingsPath = Path.ChangeExtension(layoutPath, ".settings.xml");
             AppPreferences preferences = Preferences.LoadAppPreferences(layoutPath, settingsPath);
+            checkUpdatesPreference = preferences.CheckUpdates;
             UiText.SelectLanguage(preferences.Language);
             Icon = windowIcon = AppIcons.Load(SystemInformation.IconSize.Width);
             Font = windowFont = BoardStyle.CreateFont(10f, FontStyle.Regular, GraphicsUnit.Point);
@@ -124,7 +136,7 @@ namespace CursorSeam
             MinimumSize = new Size(Math.Min(MinimumWidth, workArea.Width), Math.Min(MinimumHeight, workArea.Height));
             Bounds = InitialBounds(workArea);
 
-            var chrome = new TableLayoutPanel { ColumnCount = 1, RowCount = 10, Dock = DockStyle.Fill, Padding = new Padding(22, 15, 22, 14) };
+            var chrome = new TableLayoutPanel { ColumnCount = 1, RowCount = 8, Dock = DockStyle.Fill, Padding = new Padding(22, 15, 22, 14) };
             chrome.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             for (int row = 0; row < chrome.RowCount; row++)
                 chrome.RowStyles.Add(row == 2 ? new RowStyle(SizeType.Percent, 100) : new RowStyle(SizeType.AutoSize));
@@ -141,38 +153,61 @@ namespace CursorSeam
             header.Controls.Add(correctionControls, 1, 0);
             var editingTools = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 7) };
             editingTools.Controls.AddRange(new Control[] { identify, reset, undo });
-            var finishingTools = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft, Margin = new Padding(0) };
-            finishingTools.Controls.AddRange(new Control[] { save, measure });
+            var boardFooter = new TableLayoutPanel { ColumnCount = 2, RowCount = 1, AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 5, 0, 0) };
+            boardFooter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            boardFooter.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            var boardNotes = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(0, 0, 8, 0) };
+            var finishingTools = new FlowLayoutPanel { AutoSize = true, Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Margin = new Padding(0, 12, 0, 0) };
+            finishingTools.Controls.AddRange(new Control[] { measure, save });
             hint.ForeColor = BoardStyle.Muted;
-            hint.Margin = new Padding(3, 6, 3, 1);
+            hint.Margin = new Padding(3, 2, 3, 1);
             selection.ForeColor = BoardStyle.Muted;
             selection.Margin = new Padding(4, 0, 3, 3);
-            status.Margin = new Padding(3, 2, 3, 0);
-            var toggles = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
-            var languageControls = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            boardNotes.Controls.AddRange(new Control[] { hint, selection });
+            boardNotes.SizeChanged += (sender, e) =>
+            {
+                hint.MaximumSize = new Size(Math.Max(1, boardNotes.ClientSize.Width - hint.Margin.Horizontal), 0);
+                selection.MaximumSize = new Size(Math.Max(1, boardNotes.ClientSize.Width - selection.Margin.Horizontal), 0);
+            };
+            boardFooter.Controls.Add(boardNotes, 0, 0);
+            boardFooter.Controls.Add(finishingTools, 1, 0);
+            status.Margin = new Padding(3, 5, 3, 0);
+            var toggles = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 6, 0, 3) };
+            var languageControls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 7) };
             var settingsActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
-            trayPreference.Margin = new Padding(3, 0, 12, 4);
+            trayPreference.Margin = new Padding(3, 0, 18, 5);
             startupPreference.Margin = trayPreference.Margin;
-            languageLabel.Margin = new Padding(3, 0, 10, 4);
-            languageChoice.Margin = new Padding(3, 0, 3, 4);
+            languageLabel.Margin = new Padding(3, 0, 11, 5);
+            languageChoice.Margin = new Padding(3, 0, 9, 5);
+            exportSettings.Margin = restoreSettings.Margin = new Padding(3, 0, 9, 6);
+            deleteSettings.Margin = new Padding(12, 0, 9, 6);
             toggles.Controls.AddRange(new Control[] { startupPreference, trayPreference });
             languageControls.Controls.AddRange(new Control[] { languageLabel, languageChoice });
             settingsActions.Controls.AddRange(new Control[] { exportSettings, restoreSettings, deleteSettings });
+#if !STORE_BUILD
+            updatePreference.Margin = trayPreference.Margin;
+            updatePreference.Checked = checkUpdatesPreference ?? true;
+            toggles.Controls.Add(updatePreference);
+            updateAvailable.Margin = new Padding(3, 0, 9, 5);
+            languageControls.Controls.Add(updateAvailable);
+#endif
             chrome.Controls.Add(header, 0, 0);
             chrome.Controls.Add(editingTools, 0, 1);
             chrome.Controls.Add(view, 0, 2);
-            chrome.Controls.Add(hint, 0, 3);
-            chrome.Controls.Add(selection, 0, 4);
-            chrome.Controls.Add(finishingTools, 0, 5);
-            chrome.Controls.Add(toggles, 0, 6);
-            chrome.Controls.Add(languageControls, 0, 7);
-            chrome.Controls.Add(settingsActions, 0, 8);
-            chrome.Controls.Add(status, 0, 9);
+            chrome.Controls.Add(boardFooter, 0, 3);
+            chrome.Controls.Add(toggles, 0, 4);
+            chrome.Controls.Add(languageControls, 0, 5);
+            chrome.Controls.Add(settingsActions, 0, 6);
+            chrome.Controls.Add(status, 0, 7);
             chrome.SizeChanged += (sender, e) =>
             {
                 int width = Math.Max(1, chrome.ClientSize.Width - chrome.Padding.Horizontal - 6);
                 var limit = new Size(width, 0);
-                hint.MaximumSize = status.MaximumSize = editingTools.MaximumSize = selection.MaximumSize = finishingTools.MaximumSize = toggles.MaximumSize = settingsActions.MaximumSize = limit;
+                status.MaximumSize = editingTools.MaximumSize =
+                    toggles.MaximumSize = languageControls.MaximumSize = settingsActions.MaximumSize = limit;
+                foreach (Control toggle in toggles.Controls)
+                    toggle.MaximumSize = new Size(Math.Max(1, width - toggle.Margin.Horizontal), 0);
             };
             Controls.Add(chrome);
 
@@ -182,6 +217,20 @@ namespace CursorSeam
             trayExit = (ToolStripMenuItem)menu.Items.Add(UiText.Get("TrayExit"), null, (sender, e) => ExitApplication());
             trayPreference.Checked = preferences.TrayResident;
             tray = new NotifyIcon { Text = "CursorSeam", ContextMenuStrip = menu };
+#if !STORE_BUILD
+            updateAvailable.Click += InstallUpdate;
+            tray.BalloonTipClicked += (sender, e) => { if (availableUpdate != null) RestoreWindow(); };
+            updateTimer.Tick += CheckForUpdates;
+            updatePreference.CheckedChanged += (sender, e) =>
+            {
+                if (!resettingSettings)
+                {
+                    checkUpdatesPreference = updatePreference.Checked;
+                    SaveAppPreferences();
+                }
+                ScheduleUpdateCheck();
+            };
+#endif
             RefreshTrayIcon();
             tray.Visible = trayPreference.Checked;
             trayPreference.CheckedChanged += (sender, e) => UpdateTrayPreference();
@@ -257,7 +306,14 @@ namespace CursorSeam
             Invalidate(true);
         }
 
-        protected override void OnShown(EventArgs e) { base.OnShown(e); ApplyLayout(); }
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            ApplyLayout();
+#if !STORE_BUILD
+            StartUpdateChecks();
+#endif
+        }
 
         internal void StartInTray()
         {
@@ -265,7 +321,120 @@ namespace CursorSeam
             tray.Visible = true;
             if (!IsHandleCreated) CreateHandle();
             BeginInvoke((Action)ApplyLayout);
+#if !STORE_BUILD
+            StartUpdateChecks();
+#endif
         }
+
+#if !STORE_BUILD
+        private const int InitialUpdateDelay = 5000;
+        private const int UpdateInterval = 24 * 60 * 60 * 1000;
+
+        private void StartUpdateChecks()
+        {
+            if (updateChecksStarted) return;
+            updateChecksStarted = true;
+            ScheduleUpdateCheck();
+        }
+
+        private void ScheduleUpdateCheck()
+        {
+            updateTimer.Stop();
+            if (!updatePreference.Checked)
+            {
+                if (updateRequest != null) updateRequest.Cancel();
+                availableUpdate = null;
+                updateAvailable.Visible = false;
+            }
+            else if (updateChecksStarted)
+            {
+                updateTimer.Interval = InitialUpdateDelay;
+                updateTimer.Start();
+            }
+        }
+
+        private async void CheckForUpdates(object sender, EventArgs e)
+        {
+            if (!updatePreference.Checked || updateRequest != null) return;
+            updateTimer.Interval = UpdateInterval;
+            using (var request = new CancellationTokenSource())
+            {
+                updateRequest = request;
+                try
+                {
+                    UpdateRelease update = await updateChecker.CheckAsync(request.Token);
+                    if (resourcesDisposed || request.IsCancellationRequested || update == null) return;
+                    availableUpdate = update;
+                    UpdateAvailableLabel();
+                    updateAvailable.Visible = true;
+                    if (tray.Visible && !Visible && update.Version != notifiedVersion)
+                    {
+                        notifiedVersion = update.Version;
+                        tray.ShowBalloonTip(6000, "CursorSeam", UiText.Format("UpdateFound", UpdateVersionText(update)), ToolTipIcon.Info);
+                    }
+                }
+                finally { updateRequest = null; }
+            }
+        }
+
+        private void UpdateAvailableLabel()
+        {
+            if (downloadRequest != null) updateAvailable.Text = UiText.Get("DownloadingUpdate");
+            else if (availableUpdate != null) updateAvailable.Text = UiText.Format("InstallUpdate", UpdateVersionText(availableUpdate));
+        }
+
+        private static string UpdateVersionText(UpdateRelease update)
+        {
+            return update.Version.ToString(update.Version.Revision == 0 ? 3 : 4);
+        }
+
+        private async void InstallUpdate(object sender, EventArgs e)
+        {
+            if (availableUpdate == null || downloadRequest != null) return;
+            using (var request = new CancellationTokenSource(TimeSpan.FromMinutes(2)))
+            {
+                downloadRequest = request;
+                updateAvailable.Enabled = false;
+                UpdateAvailableLabel();
+                string installer = null;
+                try
+                {
+                    installer = await updateChecker.DownloadAsync(availableUpdate, request.Token);
+                    request.Token.ThrowIfCancellationRequested();
+                    using (var setup = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(installer)
+                        { UseShellExecute = true, Arguments = "/SILENT /NORESTART /INAPPUPDATE" }))
+                    {
+                        if (setup == null) throw new Win32Exception();
+                    }
+                    installer = null; // Leave the temporary installer available while setup is running.
+                }
+                catch (OperationCanceledException) { ReportUpdateFailure(); }
+                catch (IOException) { ReportUpdateFailure(); }
+                catch (InvalidDataException) { ReportUpdateFailure(); }
+                catch (UnauthorizedAccessException) { ReportUpdateFailure(); }
+                catch (System.Net.Http.HttpRequestException) { ReportUpdateFailure(); }
+                catch (Win32Exception) { ReportUpdateFailure(); }
+                catch (ObjectDisposedException) { ReportUpdateFailure(); }
+                finally
+                {
+                    if (installer != null) UpdateChecker.DeleteInstaller(installer);
+                    downloadRequest = null;
+                    if (!resourcesDisposed)
+                    {
+                        updateAvailable.Enabled = true;
+                        UpdateAvailableLabel();
+                    }
+                }
+            }
+        }
+
+        private void ReportUpdateFailure()
+        {
+            if (resourcesDisposed) return;
+            notice = UiText.Get("InstallUpdateError");
+            UpdateControls();
+        }
+#endif
 
         internal static Rectangle InitialBounds(Rectangle workArea)
         {
@@ -402,7 +571,7 @@ namespace CursorSeam
 
         private AppPreferences CurrentPreferences()
         {
-            return new AppPreferences { TrayResident = trayPreference.Checked, Language = UiText.Preference };
+            return new AppPreferences { TrayResident = trayPreference.Checked, Language = UiText.Preference, CheckUpdates = checkUpdatesPreference };
         }
 
         private void ApplyLanguage()
@@ -419,6 +588,10 @@ namespace CursorSeam
             startupPreference.Text = UiText.Get("AutoStart");
             startupPreference.AccessibleDescription = UiText.Get("AutoStartHelp");
             startupHelp.SetToolTip(startupPreference, startupPreference.AccessibleDescription);
+#if !STORE_BUILD
+            updatePreference.Text = UiText.Get("CheckUpdates");
+            UpdateAvailableLabel();
+#endif
             trayOpen.Text = UiText.Get("TrayOpen");
             trayExit.Text = UiText.Get("TrayExit");
             view.AccessibleName = UiText.Get("LayoutAccessibleName");
@@ -577,7 +750,14 @@ namespace CursorSeam
             paused = false;
             LoadDisplays(Windows.ReadDisplays());
             resettingSettings = true;
-            try { trayPreference.Checked = true; }
+            try
+            {
+                trayPreference.Checked = true;
+                checkUpdatesPreference = null;
+#if !STORE_BUILD
+                updatePreference.Checked = true;
+#endif
+            }
             finally { resettingSettings = false; }
             UiText.SelectLanguage("");
             ApplyLanguage();
@@ -636,6 +816,7 @@ namespace CursorSeam
         {
             var detected = Windows.ReadDisplays();
             var restored = SettingsBackup.Read(path, detected);
+            restored.Preferences.CheckUpdates = restored.Preferences.CheckUpdates ?? checkUpdatesPreference;
             Preferences.Save(layoutPath, restored.Displays, restored.Preferences);
 
             StopRouting();
@@ -644,7 +825,14 @@ namespace CursorSeam
             displayChangePending = false;
             LoadDisplays(detected);
             resettingSettings = true;
-            try { trayPreference.Checked = restored.Preferences.TrayResident; }
+            try
+            {
+                trayPreference.Checked = restored.Preferences.TrayResident;
+                checkUpdatesPreference = restored.Preferences.CheckUpdates;
+#if !STORE_BUILD
+                updatePreference.Checked = checkUpdatesPreference ?? true;
+#endif
+            }
             finally { resettingSettings = false; }
             UiText.SelectLanguage(restored.Preferences.Language);
             ApplyLanguage();
@@ -840,6 +1028,12 @@ namespace CursorSeam
             if (disposing && !resourcesDisposed)
             {
                 resourcesDisposed = true;
+#if !STORE_BUILD
+                updateTimer.Dispose();
+                if (updateRequest != null) updateRequest.Cancel();
+                if (downloadRequest != null) downloadRequest.Cancel();
+                updateChecker.Dispose();
+#endif
                 StopRouting();
                 router.Dispose();
                 CloseRulers();

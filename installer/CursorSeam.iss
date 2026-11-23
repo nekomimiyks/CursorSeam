@@ -61,6 +61,10 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\CursorSeam"; Filename: "{app}\CursorSeam.exe"
+Name: "{autodesktop}\CursorSeam"; Filename: "{app}\CursorSeam.exe"; Tasks: desktopicon
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Code]
 const
@@ -73,6 +77,20 @@ begin
   if IsUninstaller then Result := CursorSeamMutex;
 end;
 
+function InAppUpdate: Boolean;
+var
+  Index: Integer;
+begin
+  Result := False;
+  if not WizardSilent then exit;
+  for Index := 1 to ParamCount do
+    if CompareText(ParamStr(Index), '/INAPPUPDATE') = 0 then
+    begin
+      Result := True;
+      exit;
+    end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   Arguments: String;
@@ -82,7 +100,7 @@ begin
   if not CheckForMutexes(CursorSeamMutex) then exit;
   ExtractTemporaryFile('CursorSeam-update-helper.exe');
   Arguments := '--close-for-update';
-  if WizardSilent then Arguments := Arguments + ' --silent-update';
+  if WizardSilent and not InAppUpdate then Arguments := Arguments + ' --silent-update';
   if not Exec(ExpandConstant('{tmp}\CursorSeam-update-helper.exe'), Arguments, ExpandConstant('{tmp}'), SW_HIDE, ewWaitUntilTerminated, ResultCode)
      or (ResultCode <> 0) or CheckForMutexes(CursorSeamMutex) then
     Result := FmtMessage(SetupMessage(msgSetupAppRunningError), ['CursorSeam']);
@@ -97,6 +115,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   Command: String;
   ResultCode: Integer;
+  Launch: Boolean;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -104,10 +123,15 @@ begin
        (Pos('\cursorseam.exe" --startup', Lowercase(Command)) > 0) then
       RegWriteStringValue(HKCU, RunKey, 'CursorSeam', InstalledCommand);
   end;
-  if (CurStep = ssDone) and not WizardSilent then
-    if MsgBox(CustomMessage('LaunchQuestion'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+  if CurStep = ssDone then
+  begin
+    Launch := InAppUpdate;
+    if not WizardSilent then
+      Launch := MsgBox(CustomMessage('LaunchQuestion'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
+    if Launch then
       if not Exec(ExpandConstant('{app}\CursorSeam.exe'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ResultCode) then
         MsgBox(CustomMessage('LaunchFailed'), mbError, MB_OK);
+  end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

@@ -197,6 +197,7 @@ namespace CursorSeam
     {
         internal bool TrayResident = true;
         internal string Language = "";
+        internal bool? CheckUpdates;
     }
 
     internal static class Preferences
@@ -214,7 +215,7 @@ namespace CursorSeam
                 new XAttribute("id", d.Id), new XAttribute("portrait", d.Pixels.Width < d.Pixels.Height),
                 new XAttribute("x", d.Area.X), new XAttribute("y", d.Area.Y), new XAttribute("width", d.Area.Width),
                 new XAttribute("height", d.Area.Height), new XAttribute("estimated", d.Estimated))),
-                preferences == null ? null : CreateAppSettings(preferences.TrayResident, preferences.Language));
+                preferences == null ? null : CreateAppSettings(preferences));
         }
 
         internal static AppPreferences LoadAppPreferences(string path, string legacyPath = null)
@@ -226,7 +227,12 @@ namespace CursorSeam
                     XElement xml = XElement.Load(path);
                     XElement settings = xml.Name == "layout" ? xml.Element("settings") : xml;
                     if (settings != null)
-                        return new AppPreferences { Language = (string)settings.Attribute("language") ?? "", TrayResident = (bool?)settings.Attribute("trayResident") ?? true };
+                        return new AppPreferences
+                        {
+                            Language = (string)settings.Attribute("language") ?? "",
+                            TrayResident = (bool?)settings.Attribute("trayResident") ?? true,
+                            CheckUpdates = (bool?)settings.Attribute("checkUpdates")
+                        };
                 }
             }
             catch (IOException) { }
@@ -238,7 +244,7 @@ namespace CursorSeam
 
         internal static void SaveAppPreferences(string path, bool trayResident, string language)
         {
-            SaveDocument(path, CreateAppSettings(trayResident, language));
+            SaveDocument(path, CreateAppSettings(new AppPreferences { TrayResident = trayResident, Language = language }));
         }
 
         internal static void UpdateAppPreferences(string path, AppPreferences preferences)
@@ -254,13 +260,14 @@ namespace CursorSeam
                 catch (System.Xml.XmlException) { }
             }
             layout.Elements("settings").Remove();
-            layout.Add(CreateAppSettings(preferences.TrayResident, preferences.Language));
+            layout.Add(CreateAppSettings(preferences));
             SaveDocument(path, layout);
         }
 
-        private static XElement CreateAppSettings(bool trayResident, string language)
+        private static XElement CreateAppSettings(AppPreferences preferences)
         {
-            return new XElement("settings", new XAttribute("trayResident", trayResident), new XAttribute("language", language));
+            return new XElement("settings", new XAttribute("trayResident", preferences.TrayResident), new XAttribute("language", preferences.Language),
+                preferences.CheckUpdates.HasValue ? new XAttribute("checkUpdates", preferences.CheckUpdates.Value) : null);
         }
 
         internal static void ArchiveSettings(string layoutPath, string settingsPath)

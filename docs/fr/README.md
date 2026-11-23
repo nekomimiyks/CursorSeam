@@ -16,15 +16,19 @@ Téléchargez puis exécutez `CursorSeam-…-Setup.exe` depuis la [dernière ver
 2. Cliquez sur **Calibrer la taille**, puis faites glisser un bord ou un coin pour ajuster la taille réelle. Maintenez Maj enfoncée pendant le déplacement pour aligner les bords voisins.
 3. Cliquez sur **Enregistrer les réglages**, puis faites passer le pointeur d’un écran à l’autre pour vérifier le résultat.
 
-## Nouveautés de la version 1.1.1
+## Nouveautés de la version 1.1.2
 
-CursorSeam suit le mode clair ou sombre de Windows. Les réglages disposent d’interrupteurs, d’un sélecteur de langue plus large et de boutons de sauvegarde et de restauration. Le programme d’installation GitHub peut fermer la version 1.1.1 ou ultérieure lors d’une mise à jour. Pour mettre à jour la version 1.1.0 ou antérieure, quittez d’abord CursorSeam depuis la zone de notification.
+Le chevauchement du texte des interrupteurs a été corrigé et l’espacement des réglages a été ajusté. Le bouton de calibrage se trouve en bas à droite de la disposition. La version GitHub peut rechercher des mises à jour et lancer leur installation. Le programme d’installation propose un raccourci sur le bureau.
 
 ## Sauvegarder et restaurer les réglages
 
 Sélectionnez **Enregistrer la sauvegarde** pour créer un fichier `.cursorseam`. Pour le restaurer, sélectionnez **Restaurer une sauvegarde**, ouvrez le fichier et confirmez. La disposition, les dimensions, la zone de notification et la langue sont restaurées. Le démarrage avec Windows se règle séparément.
 
 ![Confirmation de restauration des réglages](backup.png)
+
+## Recherche automatique de mises à jour
+
+Lorsque **Rechercher les mises à jour automatiquement** est activé, la version GitHub vérifie les nouvelles versions peu après le démarrage, puis une fois par jour. Sélectionnez **Mettre à jour** pour télécharger et vérifier le programme d’installation, puis le lancer. Le programme d’installation permet de créer un raccourci sur le bureau.
 
 ## Licence
 

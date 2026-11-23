@@ -42,7 +42,12 @@ namespace CursorSeam
                 throw new InvalidDataException();
             var matched = CursorSeam.Preferences.MatchLayout(layout, displays);
             if (matched == null) throw new InvalidDataException();
-            return new SettingsBackup(matched, new AppPreferences { TrayResident = (bool)settings.Attribute("trayResident"), Language = language });
+            return new SettingsBackup(matched, new AppPreferences
+            {
+                TrayResident = (bool)settings.Attribute("trayResident"),
+                Language = language,
+                CheckUpdates = (bool?)settings.Attribute("checkUpdates")
+            });
         }
     }
 }

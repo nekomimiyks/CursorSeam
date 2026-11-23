@@ -60,11 +60,16 @@
   <data name="SavePromptDiscard"><value>保存せずに終える</value></data>
   <data name="SavePromptCancel"><value>調整を続ける</value></data>
   <data name="ExportSettings"><value>設定をバックアップ</value></data>
+  <data name="CheckUpdates"><value>更新を自動確認</value></data>
+  <data name="InstallUpdate"><value>{0} に更新</value></data>
+  <data name="UpdateFound"><value>更新版 {0} があります。</value></data>
+  <data name="DownloadingUpdate"><value>更新をダウンロード中…</value></data>
+  <data name="InstallUpdateError"><value>更新のダウンロード、検証、または起動に失敗しました。</value></data>
   <data name="RestoreSettings"><value>バックアップから復元</value></data>
   <data name="BackupFileType"><value>CursorSeam バックアップ</value></data>
   <data name="BackupSaved"><value>バックアップを保存しました。</value></data>
   <data name="BackupWriteError"><value>バックアップを保存できませんでした。</value></data>
-  <data name="RestoreSettingsConfirm"><value>現在の配置・実寸・常駐・言語の設定をバックアップの内容で置き換えますか？</value></data>
+  <data name="RestoreSettingsConfirm"><value>現在の設定をバックアップの内容で置き換えますか？</value></data>
   <data name="RestoreSettingsDone"><value>バックアップから設定を復元しました。</value></data>
   <data name="RestoreSettingsError"><value>復元できませんでした。バックアップファイルと、接続画面・向きを確認してください。</value></data>
 </root>

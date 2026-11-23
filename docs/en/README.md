@@ -16,15 +16,19 @@ Download and run `CursorSeam-…-Setup.exe` from the [latest release](https://gi
 2. Select **Calibrate size**, then drag an edge or corner to match the monitor's physical size. Hold Shift while dragging to snap to a neighboring edge.
 3. Select **Save settings**, then move the pointer across a display boundary to check the result.
 
-## What’s new in 1.1.1
+## What’s new in 1.1.2
 
-CursorSeam now follows the Windows light or dark setting. The settings panel has on/off switches, a wider language picker, and dedicated backup and restore buttons. The GitHub installer can close a running copy of 1.1.1 or later during an update. When upgrading from 1.1.0 or earlier, exit CursorSeam from the system tray first.
+Fixed overlapping switch labels, improved spacing in settings, and moved the calibration button to the lower right of the layout board. The GitHub edition can check for updates and start installation from the app. Its installer offers a desktop shortcut.
 
 ## Back up and restore settings
 
 Choose **Save backup** to save a `.cursorseam` file. To restore it, choose **Restore backup**, select the file, and confirm. This restores the layout, physical sizes, tray preference, and language. Set Windows startup separately.
 
 ![Confirmation dialog for restoring a settings backup](backup.png)
+
+## Automatic update checks
+
+With **Check for updates automatically** enabled, the GitHub edition checks for new releases shortly after startup and daily while running. Select **Update** to download and verify the installer, then start setup. The installer lets you choose whether to create a desktop shortcut.
 
 ## License
 

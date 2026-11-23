@@ -16,15 +16,19 @@ Lade `CursorSeam-…-Setup.exe` aus der [neuesten Version](https://github.com/ne
 2. Wählen Sie **Größe kalibrieren** und ziehen Sie an einer Kante oder Ecke, bis die Größe stimmt. Halten Sie beim Ziehen die Umschalttaste gedrückt, um an einer benachbarten Kante einzurasten.
 3. Klicken Sie auf **Einstellungen speichern** und bewegen Sie den Mauszeiger über eine Bildschirmkante, um das Ergebnis zu prüfen.
 
-## Neu in 1.1.1
+## Neu in 1.1.2
 
-CursorSeam übernimmt den hellen oder dunklen Windows-Modus. Die Einstellungen bieten Ein/Aus-Schalter, eine breitere Sprachauswahl und eigene Schaltflächen zum Sichern und Wiederherstellen. Das GitHub-Installationsprogramm kann eine laufende Version ab 1.1.1 beim Update schließen. Beende Version 1.1.0 oder älter vor dem Update über den Infobereich.
+Überlappende Schalterbeschriftungen wurden korrigiert und die Abstände der Einstellungen verbessert. Die Kalibrierung befindet sich jetzt unten rechts am Layout. Die GitHub-Ausgabe kann nach Updates suchen und die Installation aus der App starten. Das Installationsprogramm bietet eine Desktop-Verknüpfung an.
 
 ## Einstellungen sichern und wiederherstellen
 
 Wähle **Sicherung speichern**, um eine `.cursorseam`-Datei zu speichern. Wähle zum Wiederherstellen **Sicherung wiederherstellen**, öffne die Datei und bestätige. Anordnung, Abmessungen, Infobereich und Sprache werden wiederhergestellt. Stelle den Windows-Autostart separat ein.
 
 ![Dialog zum Wiederherstellen der Einstellungen](backup.png)
+
+## Automatische Update-Prüfung
+
+Wenn **Automatisch nach Updates suchen** aktiviert ist, prüft die GitHub-Ausgabe kurz nach dem Start und einmal täglich während der Laufzeit auf neue Versionen. Wähle **Aktualisieren**, um das Installationsprogramm herunterzuladen, zu prüfen und zu starten. Bei der Installation kannst du eine Desktop-Verknüpfung anlegen.
 
 ## Lizenz
 
