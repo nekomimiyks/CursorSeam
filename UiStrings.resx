@@ -59,4 +59,13 @@
   <data name="SavePromptMessage"><value>実寸調整に未保存の変更があります。設定を保存しますか？</value></data>
   <data name="SavePromptDiscard"><value>保存せずに終える</value></data>
   <data name="SavePromptCancel"><value>調整を続ける</value></data>
+  <data name="BackupSettings"><value>バックアップ</value></data>
+  <data name="ExportSettings"><value>バックアップを保存</value></data>
+  <data name="RestoreSettings"><value>バックアップから復元</value></data>
+  <data name="BackupFileType"><value>CursorSeam バックアップ</value></data>
+  <data name="BackupSaved"><value>バックアップを保存しました。</value></data>
+  <data name="BackupWriteError"><value>バックアップを保存できませんでした。</value></data>
+  <data name="RestoreSettingsConfirm"><value>現在の配置・実寸・常駐・言語の設定をバックアップの内容で置き換えますか？</value></data>
+  <data name="RestoreSettingsDone"><value>バックアップから設定を復元しました。</value></data>
+  <data name="RestoreSettingsError"><value>復元できませんでした。バックアップファイルと、接続画面・向きを確認してください。</value></data>
 </root>

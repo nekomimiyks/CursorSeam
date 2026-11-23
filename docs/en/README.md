@@ -6,17 +6,25 @@ CursorSeam keeps the mouse pointer aligned as it crosses between monitors. It wo
 
 ![Display layout with portrait and landscape monitors. Green lines show where the pointer can cross.](layout.png)
 
+## Install
+
+Download and run `CursorSeam-…-Setup.exe` from the [latest release](https://github.com/nekomimiyks/CursorSeam/releases/latest). When setup finishes, select **Yes** to launch the app or **No** to finish without launching it. Updates keep your existing settings.
+
 ## How to use
 
 1. Select **Identify displays** to check the numbers, then drag the display outlines to match your desk.
 2. Select **Calibrate size**, then drag an edge or corner to match the monitor's physical size. Hold Shift while dragging to snap to a neighboring edge.
 3. Select **Save settings**, then move the pointer across a display boundary to check the result.
 
-![Size calibration with resize handles on the selected monitor.](calibration.png)
+## What’s new in 1.1.0
 
-## Get started
+Save your settings to a backup file and restore them with the same monitors connected. The GitHub release now includes a Windows installer.
 
-To try it from source, run `.\build.ps1` in Windows PowerShell, then open the generated `CursorSeam.exe`.
+## Back up and restore settings
+
+Choose **Backup → Save backup** to save a `.cursorseam` file. To restore it, choose **Backup → Restore backup**, select the file, and confirm. This restores the layout, physical sizes, tray preference, and language. Set Windows startup separately.
+
+![Confirmation dialog for restoring a settings backup](backup.png)
 
 ## License
 

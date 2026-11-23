@@ -203,35 +203,64 @@ namespace CursorSeam
     {
         internal static string FilePath { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CursorSeam", "layout.xml"); } }
 
-        internal static void Save(string path, List<Display> displays)
+        internal static void Save(string path, List<Display> displays, AppPreferences preferences = null)
         {
-            var doc = new XElement("layout", displays.Select(d => new XElement("display",
-                new XAttribute("id", d.Id), new XAttribute("portrait", d.Pixels.Width < d.Pixels.Height),
-                new XAttribute("x", d.Area.X), new XAttribute("y", d.Area.Y), new XAttribute("width", d.Area.Width),
-                new XAttribute("height", d.Area.Height), new XAttribute("estimated", d.Estimated))));
-            SaveDocument(path, doc);
+            SaveDocument(path, CreateLayout(displays, preferences));
         }
 
-        internal static AppPreferences LoadAppPreferences(string path)
+        internal static XElement CreateLayout(List<Display> displays, AppPreferences preferences)
         {
-            var preferences = new AppPreferences();
-            if (!File.Exists(path)) return preferences;
+            return new XElement("layout", displays.Select(d => new XElement("display",
+                new XAttribute("id", d.Id), new XAttribute("portrait", d.Pixels.Width < d.Pixels.Height),
+                new XAttribute("x", d.Area.X), new XAttribute("y", d.Area.Y), new XAttribute("width", d.Area.Width),
+                new XAttribute("height", d.Area.Height), new XAttribute("estimated", d.Estimated))),
+                preferences == null ? null : CreateAppSettings(preferences.TrayResident, preferences.Language));
+        }
+
+        internal static AppPreferences LoadAppPreferences(string path, string legacyPath = null)
+        {
             try
             {
-                XElement xml = XElement.Load(path);
-                preferences.Language = (string)xml.Attribute("language") ?? "";
-                preferences.TrayResident = (bool?)xml.Attribute("trayResident") ?? true;
+                if (File.Exists(path))
+                {
+                    XElement xml = XElement.Load(path);
+                    XElement settings = xml.Name == "layout" ? xml.Element("settings") : xml;
+                    if (settings != null)
+                        return new AppPreferences { Language = (string)settings.Attribute("language") ?? "", TrayResident = (bool?)settings.Attribute("trayResident") ?? true };
+                }
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
             catch (System.Xml.XmlException) { }
             catch (FormatException) { }
-            return preferences;
+            return legacyPath == null ? new AppPreferences() : LoadAppPreferences(legacyPath);
         }
 
         internal static void SaveAppPreferences(string path, bool trayResident, string language)
         {
-            SaveDocument(path, new XElement("settings", new XAttribute("trayResident", trayResident), new XAttribute("language", language)));
+            SaveDocument(path, CreateAppSettings(trayResident, language));
+        }
+
+        internal static void UpdateAppPreferences(string path, AppPreferences preferences)
+        {
+            var layout = new XElement("layout");
+            if (File.Exists(path))
+            {
+                try
+                {
+                    var saved = XElement.Load(path);
+                    if (saved.Name == "layout") layout = saved;
+                }
+                catch (System.Xml.XmlException) { }
+            }
+            layout.Elements("settings").Remove();
+            layout.Add(CreateAppSettings(preferences.TrayResident, preferences.Language));
+            SaveDocument(path, layout);
+        }
+
+        private static XElement CreateAppSettings(bool trayResident, string language)
+        {
+            return new XElement("settings", new XAttribute("trayResident", trayResident), new XAttribute("language", language));
         }
 
         internal static void ArchiveSettings(string layoutPath, string settingsPath)
@@ -258,13 +287,17 @@ namespace CursorSeam
             }
         }
 
-        private static void SaveDocument(string path, XElement doc)
+        internal static void SaveDocument(string path, XElement doc)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path));
-            string pending = path + ".tmp";
-            doc.Save(pending);
-            if (File.Exists(path)) File.Replace(pending, path, null);
-            else File.Move(pending, path);
+            string pending = Path.Combine(Path.GetDirectoryName(path), ".cursorseam-" + Guid.NewGuid().ToString("N") + ".tmp");
+            try
+            {
+                doc.Save(pending);
+                if (File.Exists(path)) File.Replace(pending, path, null);
+                else File.Move(pending, path);
+            }
+            finally { if (File.Exists(pending)) File.Delete(pending); }
         }
 
         internal static List<Display> Load(string path, List<Display> defaults)
@@ -272,20 +305,7 @@ namespace CursorSeam
             if (!File.Exists(path)) return defaults;
             try
             {
-                var saved = XElement.Load(path).Elements("display").ToList();
-                if (saved.Count != defaults.Count) return defaults;
-                var loaded = defaults.Select(d => d.Copy()).ToList();
-                foreach (Display display in loaded)
-                {
-                    XElement entry = saved.FirstOrDefault(d => (string)d.Attribute("id") == display.Id && (bool?)d.Attribute("portrait") == (display.Pixels.Width < display.Pixels.Height));
-                    if (entry == null) return defaults;
-                    float x = (float)entry.Attribute("x"), y = (float)entry.Attribute("y");
-                    float w = (float)entry.Attribute("width"), h = (float)entry.Attribute("height");
-                    if (!(Math.Abs(x) <= 30000 && Math.Abs(y) <= 30000 && w >= 40 && w <= 10000 && h >= 40 && h <= 10000)) return defaults;
-                    display.Area = new RectangleF(x, y, w, h);
-                    display.Estimated = (bool?)entry.Attribute("estimated") ?? true;
-                }
-                return loaded;
+                return MatchLayout(XElement.Load(path), defaults) ?? defaults;
             }
             catch (IOException) { return defaults; }
             catch (UnauthorizedAccessException) { return defaults; }
@@ -293,6 +313,25 @@ namespace CursorSeam
             catch (FormatException) { return defaults; }
             catch (ArgumentException) { return defaults; }
             catch (OverflowException) { return defaults; }
+        }
+
+        internal static List<Display> MatchLayout(XElement layout, List<Display> defaults)
+        {
+            var saved = layout.Elements("display").ToList();
+            if (layout.Name != "layout" || saved.Count != defaults.Count) return null;
+            var loaded = defaults.Select(d => d.Copy()).ToList();
+            foreach (Display display in loaded)
+            {
+                XElement entry = saved.FirstOrDefault(d => (string)d.Attribute("id") == display.Id && (bool?)d.Attribute("portrait") == (display.Pixels.Width < display.Pixels.Height));
+                if (entry == null) return null;
+                saved.Remove(entry);
+                float x = (float)entry.Attribute("x"), y = (float)entry.Attribute("y");
+                float w = (float)entry.Attribute("width"), h = (float)entry.Attribute("height");
+                if (!(Math.Abs(x) <= 30000 && Math.Abs(y) <= 30000 && w >= 40 && w <= 10000 && h >= 40 && h <= 10000)) return null;
+                display.Area = new RectangleF(x, y, w, h);
+                display.Estimated = (bool?)entry.Attribute("estimated") ?? true;
+            }
+            return loaded;
         }
     }
 }

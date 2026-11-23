@@ -62,7 +62,9 @@ namespace CursorSeam
         private readonly BoardButton measure = new BoardButton("Calibrate", true), identify = new BoardButton("Identify", false),
             undo = new BoardButton("Undo", false), correction = new BoardButton("StopCorrection", false),
             reset = new BoardButton("RestoreDefaults", false), save = new BoardButton("SaveSettings", true),
-            deleteSettings = new BoardButton("DeleteSettings", false);
+            deleteSettings = new BoardButton("DeleteSettings", false), backupSettings = new BoardButton("BackupSettings", false);
+        private readonly ContextMenuStrip backupMenu = new ContextMenuStrip();
+        private readonly ToolStripMenuItem exportSettings = new ToolStripMenuItem(), restoreSettings = new ToolStripMenuItem();
         private readonly CheckBox trayPreference = new CheckBox { AutoSize = true, Text = UiText.Get("TrayPreference"), Anchor = AnchorStyles.Left };
         private readonly CheckBox startupPreference = new CheckBox { AutoSize = true, Anchor = AnchorStyles.Left };
         private readonly ToolTip startupHelp = new ToolTip();
@@ -101,7 +103,7 @@ namespace CursorSeam
         {
             this.layoutPath = layoutPath;
             settingsPath = Path.ChangeExtension(layoutPath, ".settings.xml");
-            AppPreferences preferences = Preferences.LoadAppPreferences(settingsPath);
+            AppPreferences preferences = Preferences.LoadAppPreferences(layoutPath, settingsPath);
             UiText.SelectLanguage(preferences.Language);
             Icon = windowIcon = AppIcons.Load(SystemInformation.IconSize.Width);
             Font = windowFont = BoardStyle.CreateFont(10f, FontStyle.Regular, GraphicsUnit.Point);
@@ -153,7 +155,7 @@ namespace CursorSeam
             languageChoice.DisplayMember = "Value";
             languageChoice.DrawItem += DrawLanguageChoice;
             languageControls.Controls.AddRange(new Control[] { languageLabel, languageChoice });
-            settingsControls.Controls.AddRange(new Control[] { startupPreference, trayPreference, deleteSettings, languageControls });
+            settingsControls.Controls.AddRange(new Control[] { startupPreference, trayPreference, backupSettings, deleteSettings, languageControls });
             chrome.Controls.Add(header, 0, 0);
             chrome.Controls.Add(editingTools, 0, 1);
             chrome.Controls.Add(view, 0, 2);
@@ -208,6 +210,10 @@ namespace CursorSeam
                 using (var dialog = new BoardPrompt("DeleteSettings", "DeleteSettingsPrompt", "DeleteSettings", null, "Cancel"))
                     if (dialog.ShowDialog(this) == DialogResult.Yes) ResetSettings();
             };
+            backupMenu.Items.AddRange(new ToolStripItem[] { exportSettings, restoreSettings });
+            backupSettings.Click += (sender, e) => backupMenu.Show(backupSettings, new Point(0, backupSettings.Height));
+            exportSettings.Click += (sender, e) => ExportSettings();
+            restoreSettings.Click += (sender, e) => ImportSettings();
             correction.Click += (sender, e) => ToggleCorrection();
             view.GeometryChanged += UpdateRulers;
             view.StateChanged += UpdateControls;
@@ -350,10 +356,15 @@ namespace CursorSeam
 
         private void SaveAppPreferences()
         {
-            try { Preferences.SaveAppPreferences(settingsPath, trayPreference.Checked, UiText.Preference); }
+            try { Preferences.UpdateAppPreferences(layoutPath, CurrentPreferences()); }
             catch (IOException) { notice = UiText.Get("PreferencesSaveError"); }
             catch (UnauthorizedAccessException) { notice = UiText.Get("PreferencesSaveError"); }
             UpdateControls();
+        }
+
+        private AppPreferences CurrentPreferences()
+        {
+            return new AppPreferences { TrayResident = trayPreference.Checked, Language = UiText.Preference };
         }
 
         private void ApplyLanguage()
@@ -364,6 +375,9 @@ namespace CursorSeam
             reset.Text = UiText.Get("RestoreDefaults");
             save.Text = UiText.Get("SaveSettings");
             deleteSettings.Text = UiText.Get("DeleteSettings");
+            backupSettings.Text = UiText.Get("BackupSettings");
+            exportSettings.Text = UiText.Get("ExportSettings");
+            restoreSettings.Text = UiText.Get("RestoreSettings");
             trayPreference.Text = UiText.Get("TrayPreference");
             startupPreference.Text = UiText.Get("AutoStart");
             startupPreference.AccessibleDescription = UiText.Get("AutoStartHelp");
@@ -555,6 +569,73 @@ namespace CursorSeam
             ApplyLayout();
         }
 
+        private static string BackupFileFilter()
+        {
+            return UiText.Get("BackupFileType") + " (*." + SettingsBackup.Extension + ")|*." + SettingsBackup.Extension;
+        }
+
+        private void ExportSettings()
+        {
+            using (var dialog = new SaveFileDialog { Title = exportSettings.Text, Filter = BackupFileFilter(),
+                DefaultExt = SettingsBackup.Extension, FileName = "CursorSeam-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture) })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                try
+                {
+                    string path = Path.GetFullPath(dialog.FileName);
+                    if (string.Equals(path, Path.GetFullPath(layoutPath), StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(path, Path.GetFullPath(settingsPath), StringComparison.OrdinalIgnoreCase)) throw new IOException();
+                    new SettingsBackup(committed, CurrentPreferences()).Export(path);
+                    notice = UiText.Get("BackupSaved");
+                }
+                catch (IOException) { notice = UiText.Get("BackupWriteError"); }
+                catch (UnauthorizedAccessException) { notice = UiText.Get("BackupWriteError"); }
+            }
+            UpdateControls();
+        }
+
+        private void ImportSettings()
+        {
+            string path;
+            using (var dialog = new OpenFileDialog { Title = restoreSettings.Text, Filter = BackupFileFilter(), CheckFileExists = true })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                path = dialog.FileName;
+            }
+            using (var dialog = new BoardPrompt("RestoreSettings", "RestoreSettingsConfirm", "RestoreSettings", null, "Cancel"))
+                if (dialog.ShowDialog(this) != DialogResult.Yes) return;
+
+            try { RestoreSettings(path); }
+            catch (InvalidDataException) { notice = UiText.Get("RestoreSettingsError"); }
+            catch (IOException) { notice = UiText.Get("RestoreSettingsError"); }
+            catch (UnauthorizedAccessException) { notice = UiText.Get("RestoreSettingsError"); }
+            catch (System.Xml.XmlException) { notice = UiText.Get("RestoreSettingsError"); }
+            catch (FormatException) { notice = UiText.Get("RestoreSettingsError"); }
+            catch (ArgumentException) { notice = UiText.Get("RestoreSettingsError"); }
+            catch (OverflowException) { notice = UiText.Get("RestoreSettingsError"); }
+            UpdateControls();
+        }
+
+        private void RestoreSettings(string path)
+        {
+            var detected = Windows.ReadDisplays();
+            var restored = SettingsBackup.Read(path, detected);
+            Preferences.Save(layoutPath, restored.Displays, restored.Preferences);
+
+            StopRouting();
+            SetResizeMode(false);
+            refresh.Stop();
+            displayChangePending = false;
+            LoadDisplays(detected);
+            resettingSettings = true;
+            try { trayPreference.Checked = restored.Preferences.TrayResident; }
+            finally { resettingSettings = false; }
+            UiText.SelectLanguage(restored.Preferences.Language);
+            ApplyLanguage();
+            notice = UiText.Get("RestoreSettingsDone");
+            ApplyLayout();
+        }
+
         private void ApplyEdit()
         {
             notice = null;
@@ -566,7 +647,7 @@ namespace CursorSeam
         {
             try
             {
-                Preferences.Save(layoutPath, committed);
+                Preferences.Save(layoutPath, committed, CurrentPreferences());
                 saved = committed;
                 savedHistory = history;
                 if (announce) notice = UiText.Get("Saved");
@@ -743,6 +824,7 @@ namespace CursorSeam
                 tray.Visible = false;
                 tray.ContextMenuStrip.Dispose();
                 tray.Dispose();
+                backupMenu.Dispose();
                 startupHelp.Dispose();
                 base.Dispose(true);
                 trayIcon.Dispose();
