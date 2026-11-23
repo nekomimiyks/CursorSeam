@@ -52,7 +52,6 @@ SavePromptTitle|Save calibration|크기 조정 저장|保存校准|儲存校準|
 SavePromptMessage|Your calibration has unsaved changes. Save them?|저장하지 않은 크기 조정 사항이 있습니다. 저장할까요?|校准有未保存的更改。要保存吗？|校準有未儲存的變更。要儲存嗎？|Die Kalibrierung enthält ungespeicherte Änderungen. Möchten Sie diese speichern?|Le calibrage comporte des modifications non enregistrées. Voulez-vous les enregistrer ?|La calibración tiene cambios sin guardar. ¿Quieres guardarlos?|A calibração tem alterações não salvas. Deseja salvá-las?
 SavePromptDiscard|Finish without saving|저장하지 않고 마치기|不保存并结束|不儲存並結束|Ohne Speichern beenden|Terminer sans enregistrer|Terminar sin guardar|Concluir sem salvar
 SavePromptCancel|Keep adjusting|계속 조정하기|继续校准|繼續校準|Weiter kalibrieren|Continuer le calibrage|Seguir calibrando|Continuar ajustando
-BackupSettings|Backup|백업|备份|備份|Sicherung|Sauvegarde|Copia de seguridad|Backup
 ExportSettings|Save backup|백업 저장|保存备份|儲存備份|Sicherung speichern|Enregistrer la sauvegarde|Guardar copia|Salvar backup
 RestoreSettings|Restore backup|백업 복원|从备份恢复|從備份還原|Sicherung wiederherstellen|Restaurer une sauvegarde|Restaurar copia|Restaurar backup
 BackupFileType|CursorSeam backup|CursorSeam 백업|CursorSeam 备份|CursorSeam 備份|CursorSeam-Sicherung|Sauvegarde CursorSeam|Copia de CursorSeam|Backup do CursorSeam

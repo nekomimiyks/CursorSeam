@@ -18,19 +18,28 @@ namespace CursorSeam
         [STAThread]
         private static void Main(string[] args)
         {
+            if (args.Contains(InstanceWindow.CloseForUpdateArgument))
+            {
+                Environment.ExitCode = InstanceWindow.RequestCloseForUpdate(!args.Contains(InstanceWindow.SilentUpdateArgument)) ? 0 : 1;
+                return;
+            }
             bool startInTray = args.Any(arg => string.Equals(arg, StartupRegistration.Argument, StringComparison.OrdinalIgnoreCase));
             bool created;
-            using (var single = new Mutex(true, @"Local\CursorSeam", out created))
+            using (var single = new Mutex(true, InstanceWindow.MutexName, out created))
             {
                 if (!created)
                 {
                     if (!startInTray) InstanceWindow.RequestRestore();
                     return;
                 }
-                SetProcessDpiAwarenessContext(new IntPtr(-4));
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                using (var window = new MainWindow(Preferences.FilePath)) RunWindow(window, startInTray);
+                try
+                {
+                    SetProcessDpiAwarenessContext(new IntPtr(-4));
+                    Application.EnableVisualStyles();
+                    Application.SetCompatibleTextRenderingDefault(false);
+                    using (var window = new MainWindow(Preferences.FilePath)) RunWindow(window, startInTray);
+                }
+                finally { single.ReleaseMutex(); }
             }
         }
 
@@ -62,14 +71,12 @@ namespace CursorSeam
         private readonly BoardButton measure = new BoardButton("Calibrate", true), identify = new BoardButton("Identify", false),
             undo = new BoardButton("Undo", false), correction = new BoardButton("StopCorrection", false),
             reset = new BoardButton("RestoreDefaults", false), save = new BoardButton("SaveSettings", true),
-            deleteSettings = new BoardButton("DeleteSettings", false), backupSettings = new BoardButton("BackupSettings", false);
-        private readonly ContextMenuStrip backupMenu = new ContextMenuStrip();
-        private readonly ToolStripMenuItem exportSettings = new ToolStripMenuItem(), restoreSettings = new ToolStripMenuItem();
-        private readonly CheckBox trayPreference = new CheckBox { AutoSize = true, Text = UiText.Get("TrayPreference"), Anchor = AnchorStyles.Left };
-        private readonly CheckBox startupPreference = new CheckBox { AutoSize = true, Anchor = AnchorStyles.Left };
+            deleteSettings = new BoardButton("DeleteSettings", false), exportSettings = new BoardButton("ExportSettings", false),
+            restoreSettings = new BoardButton("RestoreSettings", false);
+        private readonly BoardToggle trayPreference = new BoardToggle(), startupPreference = new BoardToggle();
         private readonly ToolTip startupHelp = new ToolTip();
         private readonly Label languageLabel = MakeLabel();
-        private readonly ComboBox languageChoice = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, DrawMode = DrawMode.OwnerDrawFixed, Anchor = AnchorStyles.Left };
+        private readonly BoardLanguagePicker languageChoice = new BoardLanguagePicker();
         private readonly MouseRouter router = new MouseRouter();
         private readonly Timer refresh = new Timer { Interval = 350 };
         private readonly NotifyIcon tray;
@@ -90,17 +97,19 @@ namespace CursorSeam
         private readonly string layoutPath, settingsPath;
         private List<Display> displays;
         private List<Display> committed, saved, defaults;
-        private bool hotkey, paused, exitRequested, displayChangePending, resettingSettings, updatingLanguage;
-        private bool initialTrayLaunch, resourcesDisposed;
+        private bool hotkey, paused, exitRequested, displayChangePending, resettingSettings;
+        private bool initialTrayLaunch, resourcesDisposed, closingForUpdate;
         private Layout routingToRestore;
         private IntPtr markedWindow;
         private string notice;
 
         [DllImport("user32.dll")] private static extern bool RegisterHotKey(IntPtr window, int id, uint modifiers, uint key);
         [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr window, int id);
+        [DllImport("user32.dll")] private static extern bool IsWindowEnabled(IntPtr window);
 
         internal MainWindow(string layoutPath)
         {
+            BoardStyle.RefreshTheme();
             this.layoutPath = layoutPath;
             settingsPath = Path.ChangeExtension(layoutPath, ".settings.xml");
             AppPreferences preferences = Preferences.LoadAppPreferences(layoutPath, settingsPath);
@@ -115,16 +124,10 @@ namespace CursorSeam
             MinimumSize = new Size(Math.Min(MinimumWidth, workArea.Width), Math.Min(MinimumHeight, workArea.Height));
             Bounds = InitialBounds(workArea);
 
-            var chrome = new TableLayoutPanel { ColumnCount = 1, RowCount = 8, Dock = DockStyle.Fill, Padding = new Padding(22, 15, 22, 14) };
+            var chrome = new TableLayoutPanel { ColumnCount = 1, RowCount = 10, Dock = DockStyle.Fill, Padding = new Padding(22, 15, 22, 14) };
             chrome.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            chrome.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            chrome.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            chrome.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            chrome.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            chrome.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            chrome.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            chrome.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            chrome.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            for (int row = 0; row < chrome.RowCount; row++)
+                chrome.RowStyles.Add(row == 2 ? new RowStyle(SizeType.Percent, 100) : new RowStyle(SizeType.AutoSize));
             var heading = MakeLabel();
             heading.Text = "CursorSeam";
             heading.Font = headingFont = new Font(Font.Name, 20, FontStyle.Bold);
@@ -145,30 +148,31 @@ namespace CursorSeam
             selection.ForeColor = BoardStyle.Muted;
             selection.Margin = new Padding(4, 0, 3, 3);
             status.Margin = new Padding(3, 2, 3, 0);
-            var settingsControls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
-            var languageControls = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Anchor = AnchorStyles.Left, Margin = new Padding(6, 0, 0, 0) };
+            var toggles = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            var languageControls = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            var settingsActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
             trayPreference.Margin = new Padding(3, 0, 12, 4);
             startupPreference.Margin = trayPreference.Margin;
-            deleteSettings.MinimumSize = new Size(92, 30);
-            languageLabel.Margin = new Padding(3, 0, 3, 4);
+            languageLabel.Margin = new Padding(3, 0, 10, 4);
             languageChoice.Margin = new Padding(3, 0, 3, 4);
-            languageChoice.DisplayMember = "Value";
-            languageChoice.DrawItem += DrawLanguageChoice;
+            toggles.Controls.AddRange(new Control[] { startupPreference, trayPreference });
             languageControls.Controls.AddRange(new Control[] { languageLabel, languageChoice });
-            settingsControls.Controls.AddRange(new Control[] { startupPreference, trayPreference, backupSettings, deleteSettings, languageControls });
+            settingsActions.Controls.AddRange(new Control[] { exportSettings, restoreSettings, deleteSettings });
             chrome.Controls.Add(header, 0, 0);
             chrome.Controls.Add(editingTools, 0, 1);
             chrome.Controls.Add(view, 0, 2);
             chrome.Controls.Add(hint, 0, 3);
             chrome.Controls.Add(selection, 0, 4);
             chrome.Controls.Add(finishingTools, 0, 5);
-            chrome.Controls.Add(settingsControls, 0, 6);
-            chrome.Controls.Add(status, 0, 7);
+            chrome.Controls.Add(toggles, 0, 6);
+            chrome.Controls.Add(languageControls, 0, 7);
+            chrome.Controls.Add(settingsActions, 0, 8);
+            chrome.Controls.Add(status, 0, 9);
             chrome.SizeChanged += (sender, e) =>
             {
                 int width = Math.Max(1, chrome.ClientSize.Width - chrome.Padding.Horizontal - 6);
                 var limit = new Size(width, 0);
-                hint.MaximumSize = status.MaximumSize = editingTools.MaximumSize = selection.MaximumSize = finishingTools.MaximumSize = settingsControls.MaximumSize = limit;
+                hint.MaximumSize = status.MaximumSize = editingTools.MaximumSize = selection.MaximumSize = finishingTools.MaximumSize = toggles.MaximumSize = settingsActions.MaximumSize = limit;
             };
             Controls.Add(chrome);
 
@@ -182,10 +186,9 @@ namespace CursorSeam
             tray.Visible = trayPreference.Checked;
             trayPreference.CheckedChanged += (sender, e) => UpdateTrayPreference();
             startupPreference.Click += (sender, e) => SetStartupPreference();
-            languageChoice.SelectedIndexChanged += (sender, e) =>
+            languageChoice.SelectionChanged += (sender, e) =>
             {
-                if (updatingLanguage || !(languageChoice.SelectedItem is KeyValuePair<string, string>)) return;
-                UiText.SelectLanguage(((KeyValuePair<string, string>)languageChoice.SelectedItem).Key);
+                UiText.SelectLanguage(languageChoice.SelectedLanguage);
                 notice = null;
                 ApplyLanguage();
                 SaveAppPreferences();
@@ -210,8 +213,6 @@ namespace CursorSeam
                 using (var dialog = new BoardPrompt("DeleteSettings", "DeleteSettingsPrompt", "DeleteSettings", null, "Cancel"))
                     if (dialog.ShowDialog(this) == DialogResult.Yes) ResetSettings();
             };
-            backupMenu.Items.AddRange(new ToolStripItem[] { exportSettings, restoreSettings });
-            backupSettings.Click += (sender, e) => backupMenu.Show(backupSettings, new Point(0, backupSettings.Height));
             exportSettings.Click += (sender, e) => ExportSettings();
             restoreSettings.Click += (sender, e) => ImportSettings();
             correction.Click += (sender, e) => ToggleCorrection();
@@ -240,6 +241,20 @@ namespace CursorSeam
 #endif
                 ReadStartupPreference();
             ApplyLanguage();
+            ApplyTheme();
+        }
+
+        private void ApplyTheme()
+        {
+            BackColor = BoardStyle.Surface;
+            ForeColor = BoardStyle.Ink;
+            hint.ForeColor = selection.ForeColor = BoardStyle.Muted;
+            view.ApplyTheme();
+            BoardStyle.StyleMenu(tray.ContextMenuStrip);
+            if (IsHandleCreated) BoardStyle.ApplyTitleBar(Handle);
+            UpdateControls();
+            PerformLayout();
+            Invalidate(true);
         }
 
         protected override void OnShown(EventArgs e) { base.OnShown(e); ApplyLayout(); }
@@ -278,6 +293,29 @@ namespace CursorSeam
             exitRequested = true;
             Close();
             exitRequested = false;
+        }
+
+        private bool CloseForUpdate(bool interactive)
+        {
+            if (closingForUpdate || !IsWindowEnabled(Handle)) return false;
+            closingForUpdate = true;
+            try
+            {
+                view.CancelDrag();
+                if (!SameLayout(committed, saved))
+                {
+                    if (!interactive) return false;
+                    RestoreWindow();
+                    if (view.ResizingEnabled)
+                    {
+                        if (!TryFinishCalibration()) return false;
+                    }
+                    else if (!SaveLayout(false)) return false;
+                }
+                BeginInvoke((MethodInvoker)ExitApplication);
+                return true;
+            }
+            finally { closingForUpdate = false; }
         }
 
         private void UpdateTrayPreference()
@@ -375,7 +413,6 @@ namespace CursorSeam
             reset.Text = UiText.Get("RestoreDefaults");
             save.Text = UiText.Get("SaveSettings");
             deleteSettings.Text = UiText.Get("DeleteSettings");
-            backupSettings.Text = UiText.Get("BackupSettings");
             exportSettings.Text = UiText.Get("ExportSettings");
             restoreSettings.Text = UiText.Get("RestoreSettings");
             trayPreference.Text = UiText.Get("TrayPreference");
@@ -390,29 +427,8 @@ namespace CursorSeam
 
             languageLabel.Text = languageChoice.AccessibleName = UiText.Get("Language");
             var choices = new[] { new KeyValuePair<string, string>("", UiText.Get("SystemLanguage")) }.Concat(UiText.Languages).ToArray();
-            updatingLanguage = true;
-            languageChoice.BeginUpdate();
-            try
-            {
-                languageChoice.Items.Clear();
-                foreach (var choice in choices) languageChoice.Items.Add(choice);
-                languageChoice.SelectedIndex = Array.FindIndex(choices, choice => choice.Key == UiText.Preference);
-                languageChoice.Width = choices.Max(choice => TextRenderer.MeasureText(choice.Value, languageChoice.Font).Width) + 28;
-            }
-            finally { languageChoice.EndUpdate(); updatingLanguage = false; }
+            languageChoice.SetChoices(choices, UiText.Preference);
             UpdateControls();
-        }
-
-        private void DrawLanguageChoice(object sender, DrawItemEventArgs e)
-        {
-            e.DrawBackground();
-            int index = e.Index >= 0 ? e.Index : languageChoice.SelectedIndex;
-            if (index < 0 || index >= languageChoice.Items.Count) return;
-            var item = (KeyValuePair<string, string>)languageChoice.Items[index];
-            Rectangle bounds = Rectangle.Inflate(e.Bounds, -3, 0);
-            TextRenderer.DrawText(e.Graphics, item.Value, e.Font, bounds, e.ForeColor,
-                TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
-            e.DrawFocusRectangle();
         }
 
         private void RefreshTrayIcon()
@@ -751,9 +767,15 @@ namespace CursorSeam
                 RestoreWindow();
                 return;
             }
+            if (m.Msg != 0 && m.Msg == InstanceWindow.CloseForUpdateMessage)
+            {
+                m.Result = CloseForUpdate(m.WParam != IntPtr.Zero) ? new IntPtr(1) : IntPtr.Zero;
+                return;
+            }
             if (m.Msg == 0x00ff && router != null) router.OnRawMouse(m.LParam);
             if (m.Msg == 0x0312 && m.WParam.ToInt32() == 1 && hotkey) Pause(UiText.Get("StoppedByShortcut"));
             base.WndProc(ref m);
+            if (BoardStyle.IsThemeChange(m.Msg) && tray != null && (BoardStyle.RefreshTheme() || BackColor != BoardStyle.Surface)) ApplyTheme();
             if (m.Msg == 0x02e0 && tray != null) RefreshTrayIcon();
             if (m.Msg == 0x007e && refresh != null && displays != null)
             {
@@ -778,6 +800,7 @@ namespace CursorSeam
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
+            BoardStyle.ApplyTitleBar(Handle);
             markedWindow = Handle;
             InstanceWindow.Mark(markedWindow);
             if (routingToRestore != null)
@@ -824,7 +847,6 @@ namespace CursorSeam
                 tray.Visible = false;
                 tray.ContextMenuStrip.Dispose();
                 tray.Dispose();
-                backupMenu.Dispose();
                 startupHelp.Dispose();
                 base.Dispose(true);
                 trayIcon.Dispose();
@@ -868,6 +890,23 @@ namespace CursorSeam
             AcceptButton = discardKey == null ? cancel : confirm;
             CancelButton = cancel;
             if (discardKey == null) ActiveControl = cancel;
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            BoardStyle.ApplyTitleBar(Handle);
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (!BoardStyle.IsThemeChange(m.Msg)) return;
+            BoardStyle.RefreshTheme();
+            BackColor = BoardStyle.Surface;
+            ForeColor = BoardStyle.Ink;
+            BoardStyle.ApplyTitleBar(Handle);
+            Invalidate(true);
         }
 
         protected override void Dispose(bool disposing)

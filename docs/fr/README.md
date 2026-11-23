@@ -16,13 +16,13 @@ Téléchargez puis exécutez `CursorSeam-…-Setup.exe` depuis la [dernière ver
 2. Cliquez sur **Calibrer la taille**, puis faites glisser un bord ou un coin pour ajuster la taille réelle. Maintenez Maj enfoncée pendant le déplacement pour aligner les bords voisins.
 3. Cliquez sur **Enregistrer les réglages**, puis faites passer le pointeur d’un écran à l’autre pour vérifier le résultat.
 
-## Nouveautés de la version 1.1.0
+## Nouveautés de la version 1.1.1
 
-Vous pouvez sauvegarder vos réglages dans un fichier et les restaurer avec les mêmes écrans. GitHub propose désormais un programme d’installation pour Windows.
+CursorSeam suit le mode clair ou sombre de Windows. Les réglages disposent d’interrupteurs, d’un sélecteur de langue plus large et de boutons de sauvegarde et de restauration. Le programme d’installation GitHub peut fermer la version 1.1.1 ou ultérieure lors d’une mise à jour. Pour mettre à jour la version 1.1.0 ou antérieure, quittez d’abord CursorSeam depuis la zone de notification.
 
 ## Sauvegarder et restaurer les réglages
 
-Sélectionnez **Sauvegarde → Enregistrer la sauvegarde** pour créer un fichier `.cursorseam`. Pour le restaurer, sélectionnez **Sauvegarde → Restaurer une sauvegarde**, ouvrez le fichier et confirmez. La disposition, les dimensions, la zone de notification et la langue sont restaurées. Le démarrage avec Windows se règle séparément.
+Sélectionnez **Enregistrer la sauvegarde** pour créer un fichier `.cursorseam`. Pour le restaurer, sélectionnez **Restaurer une sauvegarde**, ouvrez le fichier et confirmez. La disposition, les dimensions, la zone de notification et la langue sont restaurées. Le démarrage avec Windows se règle séparément.
 
 ![Confirmation de restauration des réglages](backup.png)
 

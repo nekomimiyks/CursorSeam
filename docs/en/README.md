@@ -16,13 +16,13 @@ Download and run `CursorSeam-…-Setup.exe` from the [latest release](https://gi
 2. Select **Calibrate size**, then drag an edge or corner to match the monitor's physical size. Hold Shift while dragging to snap to a neighboring edge.
 3. Select **Save settings**, then move the pointer across a display boundary to check the result.
 
-## What’s new in 1.1.0
+## What’s new in 1.1.1
 
-Save your settings to a backup file and restore them with the same monitors connected. The GitHub release now includes a Windows installer.
+CursorSeam now follows the Windows light or dark setting. The settings panel has on/off switches, a wider language picker, and dedicated backup and restore buttons. The GitHub installer can close a running copy of 1.1.1 or later during an update. When upgrading from 1.1.0 or earlier, exit CursorSeam from the system tray first.
 
 ## Back up and restore settings
 
-Choose **Backup → Save backup** to save a `.cursorseam` file. To restore it, choose **Backup → Restore backup**, select the file, and confirm. This restores the layout, physical sizes, tray preference, and language. Set Windows startup separately.
+Choose **Save backup** to save a `.cursorseam` file. To restore it, choose **Restore backup**, select the file, and confirm. This restores the layout, physical sizes, tray preference, and language. Set Windows startup separately.
 
 ![Confirmation dialog for restoring a settings backup](backup.png)
 

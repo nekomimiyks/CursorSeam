@@ -39,6 +39,14 @@ namespace CursorSeam
             AccessibleName = UiText.Get("LayoutAccessibleName");
         }
 
+        internal void ApplyTheme()
+        {
+            BackColor = BoardStyle.Surface;
+            ForeColor = BoardStyle.Ink;
+            if (dots != null) { dots.Dispose(); dots = null; }
+            Invalidate();
+        }
+
         internal void SetDisplays(List<Display> value)
         {
             CancelDrag();
@@ -93,7 +101,7 @@ namespace CursorSeam
         {
             using (var tile = new Bitmap(20, 20))
             using (var graphics = Graphics.FromImage(tile))
-            using (var dot = new SolidBrush(Color.FromArgb(187, 205, 212)))
+            using (var dot = new SolidBrush(BoardStyle.Dots))
             {
                 graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 graphics.FillEllipse(dot, 15, 15, 2, 2);
@@ -126,8 +134,11 @@ namespace CursorSeam
             g.SmoothingMode = SmoothingMode.AntiAlias;
             using (var background = new SolidBrush(BoardStyle.Canvas))
             using (var shape = BoardStyle.Rounded(ClientRectangle, 12)) g.FillPath(background, shape);
-            if (dots == null) dots = CreateDots();
-            g.FillRectangle(dots, ClientRectangle);
+            if (!BoardStyle.HighContrast)
+            {
+                if (dots == null) dots = CreateDots();
+                g.FillRectangle(dots, ClientRectangle);
+            }
             if (displays.Count == 0)
             {
                 TextRenderer.DrawText(g, UiText.Get("NoDisplays"), Font, ClientRectangle, BoardStyle.Muted, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
@@ -176,7 +187,7 @@ namespace CursorSeam
         {
             RectangleF box = ToView(display.Area);
             bool selected = display == Selected;
-            using (var fill = new SolidBrush(selected ? Color.FromArgb(210, 235, 228) : Color.FromArgb(233, 242, 245)))
+            using (var fill = new SolidBrush(selected ? BoardStyle.SelectedDisplayFill : BoardStyle.DisplayFill))
             using (var border = new Pen(selected ? BoardStyle.Accent : BoardStyle.Ink, selected ? 3 : 2))
             using (var shape = BoardStyle.Rounded(box, 4))
             {

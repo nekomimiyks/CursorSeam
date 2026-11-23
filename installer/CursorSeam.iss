@@ -12,7 +12,9 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 MinVersion=10.0.19041
-AppMutex=Local\CursorSeam
+AppMutex={code:UninstallAppMutex}
+SetupMutex=Local\CursorSeam.Setup
+CloseApplications=no
 UninstallDisplayIcon={app}\CursorSeam.exe
 SetupIconFile=..\CursorSeam.ico
 OutputDir={#OutputDirectory}
@@ -53,6 +55,7 @@ spanish.LaunchFailed=No se pudo iniciar CursorSeam. Ábrelo desde el menú Inici
 brazilian.LaunchFailed=Não foi possível iniciar o CursorSeam. Abra o aplicativo pelo menu Iniciar.
 
 [Files]
+Source: "{#Application}"; DestName: "CursorSeam-update-helper.exe"; Flags: dontcopy
 Source: "{#Application}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -62,6 +65,28 @@ Name: "{autoprograms}\CursorSeam"; Filename: "{app}\CursorSeam.exe"
 [Code]
 const
   RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
+  CursorSeamMutex = 'Local\CursorSeam';
+
+function UninstallAppMutex(Param: String): String;
+begin
+  Result := '';
+  if IsUninstaller then Result := CursorSeamMutex;
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  Arguments: String;
+  ResultCode: Integer;
+begin
+  Result := '';
+  if not CheckForMutexes(CursorSeamMutex) then exit;
+  ExtractTemporaryFile('CursorSeam-update-helper.exe');
+  Arguments := '--close-for-update';
+  if WizardSilent then Arguments := Arguments + ' --silent-update';
+  if not Exec(ExpandConstant('{tmp}\CursorSeam-update-helper.exe'), Arguments, ExpandConstant('{tmp}'), SW_HIDE, ewWaitUntilTerminated, ResultCode)
+     or (ResultCode <> 0) or CheckForMutexes(CursorSeamMutex) then
+    Result := FmtMessage(SetupMessage(msgSetupAppRunningError), ['CursorSeam']);
+end;
 
 function InstalledCommand: String;
 begin
