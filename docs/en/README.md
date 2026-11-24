@@ -16,9 +16,11 @@ Download and run `CursorSeam-…-Setup.exe` from the [latest release](https://gi
 2. Select **Calibrate size**, then drag an edge or corner to match the monitor's physical size. Hold Shift while dragging to snap to a neighboring edge.
 3. Select **Save settings**, then move the pointer across a display boundary to check the result.
 
-## What’s new in 1.1.2
+## What’s new in 1.1.3
 
-Fixed overlapping switch labels, improved spacing in settings, and moved the calibration button to the lower right of the layout board. The GitHub edition can check for updates and start installation from the app. Its installer offers a desktop shortcut.
+**About**, in the lower-right corner, shows the running version and links to the publisher’s GitHub and Microsoft Store apps. If the Store app cannot launch, the Store link opens in the default browser.
+
+![About CursorSeam](about.png)
 
 ## Back up and restore settings
 

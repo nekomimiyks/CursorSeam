@@ -68,6 +68,7 @@ namespace CursorSeam
         private const int MinimumWidth = 880, MinimumHeight = 640;
         private readonly LayoutView view = new LayoutView { Dock = DockStyle.Fill, Margin = new Padding(0) };
         private readonly Label selection = MakeLabel(), status = MakeLabel(), hint = MakeLabel(), correctionState = MakeLabel();
+        private readonly LinkLabel about = AboutDialog.MakeLink("AboutApp");
         private readonly BoardButton measure = new BoardButton("Calibrate", true), identify = new BoardButton("Identify", false),
             undo = new BoardButton("Undo", false), correction = new BoardButton("StopCorrection", false),
             reset = new BoardButton("RestoreDefaults", false), save = new BoardButton("SaveSettings", true),
@@ -173,6 +174,18 @@ namespace CursorSeam
             boardFooter.Controls.Add(boardNotes, 0, 0);
             boardFooter.Controls.Add(finishingTools, 1, 0);
             status.Margin = new Padding(3, 5, 3, 0);
+            var statusRow = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, RowCount = 1, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            about.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            about.Margin = new Padding(12, 5, 3, 0);
+            about.LinkClicked += (sender, e) => { using (var dialog = new AboutDialog { Font = Font }) dialog.ShowDialog(this); };
+            statusRow.Controls.Add(status, 0, 0);
+            statusRow.Controls.Add(about, 1, 0);
+            EventHandler fitStatus = (sender, e) =>
+                status.MaximumSize = new Size(Math.Max(1, statusRow.ClientSize.Width - about.Width - about.Margin.Horizontal - status.Margin.Horizontal), 0);
+            statusRow.SizeChanged += fitStatus;
+            about.SizeChanged += fitStatus;
             var toggles = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 6, 0, 3) };
             var languageControls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 7) };
             var settingsActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
@@ -199,12 +212,12 @@ namespace CursorSeam
             chrome.Controls.Add(toggles, 0, 4);
             chrome.Controls.Add(languageControls, 0, 5);
             chrome.Controls.Add(settingsActions, 0, 6);
-            chrome.Controls.Add(status, 0, 7);
+            chrome.Controls.Add(statusRow, 0, 7);
             chrome.SizeChanged += (sender, e) =>
             {
                 int width = Math.Max(1, chrome.ClientSize.Width - chrome.Padding.Horizontal - 6);
                 var limit = new Size(width, 0);
-                status.MaximumSize = editingTools.MaximumSize =
+                editingTools.MaximumSize =
                     toggles.MaximumSize = languageControls.MaximumSize = settingsActions.MaximumSize = limit;
                 foreach (Control toggle in toggles.Controls)
                     toggle.MaximumSize = new Size(Math.Max(1, width - toggle.Margin.Horizontal), 0);
@@ -298,6 +311,7 @@ namespace CursorSeam
             BackColor = BoardStyle.Surface;
             ForeColor = BoardStyle.Ink;
             hint.ForeColor = selection.ForeColor = BoardStyle.Muted;
+            AboutDialog.StyleLink(about);
             view.ApplyTheme();
             BoardStyle.StyleMenu(tray.ContextMenuStrip);
             if (IsHandleCreated) BoardStyle.ApplyTitleBar(Handle);
@@ -577,6 +591,7 @@ namespace CursorSeam
         private void ApplyLanguage()
         {
             Text = UiText.Get("WindowTitle");
+            about.Text = UiText.Get("AboutApp");
             identify.Text = UiText.Get("Identify");
             undo.Text = UiText.Get("Undo");
             reset.Text = UiText.Get("RestoreDefaults");

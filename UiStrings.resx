@@ -5,6 +5,12 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
   <data name="WindowTitle"><value>CursorSeam — ディスプレイ配置</value></data>
+  <data name="AboutApp"><value>アプリについて</value></data>
+  <data name="AppVersion"><value>バージョン: {0}</value></data>
+  <data name="GithubProfile"><value>GitHubの公開アプリ</value></data>
+  <data name="StoreApps"><value>Microsoft Storeの公開アプリ</value></data>
+  <data name="CloseAbout"><value>閉じる</value></data>
+  <data name="AboutLinkError"><value>リンクを開けませんでした。</value></data>
   <data name="LayoutAccessibleName"><value>ディスプレイ配置図</value></data>
   <data name="NoDisplays"><value>ディスプレイを取得できませんでした</value></data>
   <data name="DisplayFallback"><value>ディスプレイ</value></data>

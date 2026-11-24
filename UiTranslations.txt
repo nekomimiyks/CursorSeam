@@ -1,4 +1,10 @@
 key|en|ko|zh-Hans|zh-Hant|de|fr|es|pt-BR
+AboutApp|About|앱 정보|关于此应用|關於此應用程式|Über die App|À propos|Acerca de la app|Sobre o aplicativo
+AppVersion|Version {0}|버전 {0}|版本 {0}|版本 {0}|Version {0}|Version {0}|Versión {0}|Versão {0}
+GithubProfile|Public apps on GitHub|GitHub 공개 앱|GitHub 上的公开应用|GitHub 上的公開應用程式|Öffentliche Apps auf GitHub|Applications publiques sur GitHub|Aplicaciones públicas en GitHub|Aplicativos públicos no GitHub
+StoreApps|Public apps on Microsoft Store|Microsoft Store 공개 앱|Microsoft Store 上的公开应用|Microsoft Store 上的公開應用程式|Öffentliche Apps im Microsoft Store|Applications publiques sur Microsoft Store|Aplicaciones públicas en Microsoft Store|Aplicativos públicos na Microsoft Store
+CloseAbout|Close|닫기|关闭|關閉|Schließen|Fermer|Cerrar|Fechar
+AboutLinkError|Could not open the link.|링크를 열 수 없습니다.|无法打开链接。|無法開啟連結。|Der Link konnte nicht geöffnet werden.|Impossible d’ouvrir le lien.|No se pudo abrir el enlace.|Não foi possível abrir o link.
 WindowTitle|CursorSeam — Display layout|CursorSeam — 디스플레이 배치|CursorSeam — 显示器布局|CursorSeam — 顯示器配置|CursorSeam — Bildschirm­anordnung|CursorSeam — Disposition des écrans|CursorSeam — Disposición de pantallas|CursorSeam — Disposição dos monitores
 LayoutAccessibleName|Display layout board|디스플레이 배치 보드|显示器布局面板|顯示器配置面板|Bildschirm­anordnung|Panneau de disposition des écrans|Panel de disposición de pantallas|Painel de disposição dos monitores
 NoDisplays|No displays detected|디스플레이를 찾을 수 없습니다|未检测到显示器|找不到顯示器|Keine Bildschirme erkannt|Aucun écran détecté|No se detectaron pantallas|Nenhum monitor detectado

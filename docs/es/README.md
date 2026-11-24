@@ -16,9 +16,11 @@ Descarga y ejecuta `CursorSeam-…-Setup.exe` desde la [última versión](https:
 2. Pulsa **Calibrar tamaño** y arrastra un borde o una esquina para ajustar el tamaño físico. Mantén pulsada Mayús al arrastrar para alinear los bordes contiguos.
 3. Pulsa **Guardar ajustes** y mueve el puntero de una pantalla a otra para comprobar el resultado.
 
-## Novedades de la versión 1.1.2
+## Novedades de la versión 1.1.3
 
-Se corrigió la superposición de los textos de los interruptores y se ajustó el espaciado de los ajustes. El botón de calibración está en la parte inferior derecha del panel. La edición de GitHub permite buscar actualizaciones e iniciar su instalación desde la aplicación. El instalador ofrece un acceso directo en el escritorio.
+En **Acerca de la app**, abajo a la derecha, puedes consultar la versión en ejecución y abrir las aplicaciones públicas de GitHub y Microsoft Store. Si Microsoft Store no se puede iniciar, la lista se abre en el navegador predeterminado.
+
+![Acerca de CursorSeam](about.png)
 
 ## Copia y restauración de ajustes
 
