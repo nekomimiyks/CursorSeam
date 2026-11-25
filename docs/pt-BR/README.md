@@ -16,7 +16,9 @@ Baixe e execute `CursorSeam-…-Setup.exe` da [versão mais recente](https://git
 2. Clique em **Calibrar tamanho** e arraste uma borda ou um canto para ajustar o tamanho físico. Segure Shift ao arrastar para alinhar bordas vizinhas.
 3. Clique em **Salvar configurações** e mova o ponteiro entre os monitores para conferir o resultado.
 
-## Novidades da versão 1.1.3
+## Novidades da versão 1.1.4
+
+O novo ícone mostra dois monitores widescreen de tamanhos diferentes e um ponteiro branco sobre um fundo azul-claro.
 
 Em **Sobre o aplicativo**, no canto inferior direito, você pode ver a versão em execução e abrir os aplicativos públicos no GitHub e na Microsoft Store. Se o aplicativo da Microsoft Store não iniciar, a lista será aberta no navegador padrão.
 

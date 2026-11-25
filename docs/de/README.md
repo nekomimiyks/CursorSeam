@@ -16,7 +16,9 @@ Lade `CursorSeam-…-Setup.exe` aus der [neuesten Version](https://github.com/ne
 2. Wählen Sie **Größe kalibrieren** und ziehen Sie an einer Kante oder Ecke, bis die Größe stimmt. Halten Sie beim Ziehen die Umschalttaste gedrückt, um an einer benachbarten Kante einzurasten.
 3. Klicken Sie auf **Einstellungen speichern** und bewegen Sie den Mauszeiger über eine Bildschirmkante, um das Ergebnis zu prüfen.
 
-## Neu in 1.1.3
+## Neu in 1.1.4
+
+Das neue Icon zeigt zwei unterschiedlich große Breitbildmonitore und einen weißen Mauszeiger auf hellblauem Hintergrund.
 
 Unter **Über die App** unten rechts findest du die laufende Version und Links zu den öffentlichen Apps auf GitHub und im Microsoft Store. Kann die Store-App nicht starten, öffnet sich die Liste im Standardbrowser.
 

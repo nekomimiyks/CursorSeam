@@ -16,7 +16,9 @@ Download and run `CursorSeam-…-Setup.exe` from the [latest release](https://gi
 2. Select **Calibrate size**, then drag an edge or corner to match the monitor's physical size. Hold Shift while dragging to snap to a neighboring edge.
 3. Select **Save settings**, then move the pointer across a display boundary to check the result.
 
-## What’s new in 1.1.3
+## What’s new in 1.1.4
+
+The new icon pairs two widescreen monitors of different sizes with a white pointer on a light-blue background.
 
 **About**, in the lower-right corner, shows the running version and links to the publisher’s GitHub and Microsoft Store apps. If the Store app cannot launch, the Store link opens in the default browser.
 
