@@ -72,7 +72,7 @@ namespace CursorSeam
         private readonly BoardButton measure = new BoardButton("Calibrate", true), identify = new BoardButton("Identify", false),
             undo = new BoardButton("Undo", false), correction = new BoardButton("StopCorrection", false),
             reset = new BoardButton("RestoreDefaults", false), save = new BoardButton("SaveSettings", true),
-            deleteSettings = new BoardButton("DeleteSettings", false), exportSettings = new BoardButton("ExportSettings", false),
+            deleteSettings = new BoardButton("DeleteSettings", false, true), exportSettings = new BoardButton("ExportSettings", false),
             restoreSettings = new BoardButton("RestoreSettings", false);
         private readonly BoardToggle trayPreference = new BoardToggle(), startupPreference = new BoardToggle();
 #if !STORE_BUILD
@@ -137,7 +137,7 @@ namespace CursorSeam
             MinimumSize = new Size(Math.Min(MinimumWidth, workArea.Width), Math.Min(MinimumHeight, workArea.Height));
             Bounds = InitialBounds(workArea);
 
-            var chrome = new TableLayoutPanel { ColumnCount = 1, RowCount = 8, Dock = DockStyle.Fill, Padding = new Padding(22, 15, 22, 14) };
+            var chrome = new TableLayoutPanel { ColumnCount = 1, RowCount = 7, Dock = DockStyle.Fill, Padding = new Padding(22, 15, 22, 14) };
             chrome.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             for (int row = 0; row < chrome.RowCount; row++)
                 chrome.RowStyles.Add(row == 2 ? new RowStyle(SizeType.Percent, 100) : new RowStyle(SizeType.AutoSize));
@@ -174,7 +174,13 @@ namespace CursorSeam
             boardFooter.Controls.Add(boardNotes, 0, 0);
             boardFooter.Controls.Add(finishingTools, 1, 0);
             status.Margin = new Padding(3, 5, 3, 0);
-            var statusRow = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, RowCount = 1, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            var statusRow = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, RowCount = 1,
+                Dock = DockStyle.Fill, Margin = new Padding(0, 4, 0, 0), Padding = new Padding(0, 4, 0, 0) };
+            statusRow.Paint += (sender, e) =>
+            {
+                using (var line = new Pen(BoardStyle.QuietButton))
+                    e.Graphics.DrawLine(line, 3, 0, statusRow.ClientSize.Width - 3, 0);
+            };
             statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             about.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -187,8 +193,14 @@ namespace CursorSeam
             statusRow.SizeChanged += fitStatus;
             about.SizeChanged += fitStatus;
             var toggles = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 6, 0, 3) };
-            var languageControls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 7) };
-            var settingsActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            var settingsRow = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, RowCount = 2, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            settingsRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            var actionsColumn = new ColumnStyle(SizeType.Absolute, 0);
+            settingsRow.ColumnStyles.Add(actionsColumn);
+            settingsRow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            settingsRow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var languageControls = new FlowLayoutPanel { AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Top, Margin = new Padding(0) };
+            var settingsActions = new FlowLayoutPanel { AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Top, Margin = new Padding(0) };
             trayPreference.Margin = new Padding(3, 0, 18, 5);
             startupPreference.Margin = trayPreference.Margin;
             languageLabel.Margin = new Padding(3, 0, 11, 5);
@@ -205,14 +217,39 @@ namespace CursorSeam
             updateAvailable.Margin = new Padding(3, 0, 9, 5);
             languageControls.Controls.Add(updateAvailable);
 #endif
+            settingsRow.Controls.Add(languageControls, 0, 0);
+            settingsRow.SetColumnSpan(languageControls, 2);
+            settingsRow.Controls.Add(settingsActions, 0, 1);
+            settingsRow.SetColumnSpan(settingsActions, 2);
+            bool sideBySide = false;
+            Action fitSettingsRow = () =>
+            {
+                int actionWidth = settingsActions.Controls.Cast<Control>().Sum(c => c.PreferredSize.Width + c.Margin.Horizontal);
+                int languageWidth = languageControls.Controls.Cast<Control>().Where(c => c.Visible).Sum(c => c.PreferredSize.Width + c.Margin.Horizontal);
+                bool fits = settingsRow.ClientSize.Width >= languageWidth + actionWidth + 20;
+                int columnWidth = fits ? actionWidth : 0;
+                if (fits == sideBySide && actionsColumn.Width == columnWidth) return;
+                sideBySide = fits;
+                settingsRow.SuspendLayout();
+                actionsColumn.Width = columnWidth;
+                settingsRow.SetColumnSpan(settingsActions, fits ? 1 : 2);
+                settingsRow.SetCellPosition(settingsActions, new TableLayoutPanelCellPosition(fits ? 1 : 0, fits ? 0 : 1));
+                settingsRow.SetColumnSpan(languageControls, fits ? 1 : 2);
+                settingsActions.WrapContents = !fits;
+                settingsActions.Anchor = AnchorStyles.Top | (fits ? AnchorStyles.Right : AnchorStyles.Left);
+                settingsRow.ResumeLayout();
+            };
+            settingsRow.SizeChanged += (sender, e) => fitSettingsRow();
+            languageControls.Layout += (sender, e) => fitSettingsRow();
+            settingsActions.Layout += (sender, e) => fitSettingsRow();
+            Shown += (sender, e) => fitSettingsRow();
             chrome.Controls.Add(header, 0, 0);
             chrome.Controls.Add(editingTools, 0, 1);
             chrome.Controls.Add(view, 0, 2);
             chrome.Controls.Add(boardFooter, 0, 3);
             chrome.Controls.Add(toggles, 0, 4);
-            chrome.Controls.Add(languageControls, 0, 5);
-            chrome.Controls.Add(settingsActions, 0, 6);
-            chrome.Controls.Add(statusRow, 0, 7);
+            chrome.Controls.Add(settingsRow, 0, 5);
+            chrome.Controls.Add(statusRow, 0, 6);
             chrome.SizeChanged += (sender, e) =>
             {
                 int width = Math.Max(1, chrome.ClientSize.Width - chrome.Padding.Horizontal - 6);

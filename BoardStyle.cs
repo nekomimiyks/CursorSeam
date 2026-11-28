@@ -128,6 +128,7 @@ namespace CursorSeam
     internal sealed class BoardButton : Button
     {
         private bool primary, hover, pressed;
+        private readonly bool outlined;
 
         internal bool Primary
         {
@@ -135,9 +136,10 @@ namespace CursorSeam
             set { if (primary != value) { primary = value; Invalidate(); } }
         }
 
-        internal BoardButton(string textKey, bool primary)
+        internal BoardButton(string textKey, bool primary, bool outlined = false)
         {
             this.primary = primary;
+            this.outlined = outlined;
             Text = UiText.Get(textKey);
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
@@ -156,12 +158,17 @@ namespace CursorSeam
             using (var surface = new SolidBrush(Parent == null ? BoardStyle.Surface : Parent.BackColor))
                 e.Graphics.FillRectangle(surface, ClientRectangle);
             if (BoardStyle.HighContrast) { base.OnPaint(e); return; }
-            Color background = Enabled ? (Primary ? BoardStyle.PrimaryButton : BoardStyle.QuietButton) : BoardStyle.DisabledButton;
+            Color background = Enabled ? (Primary ? BoardStyle.PrimaryButton : outlined ? BoardStyle.Field : BoardStyle.QuietButton) : BoardStyle.DisabledButton;
             Color foreground = Enabled ? (Primary ? Color.White : BoardStyle.Ink) : BoardStyle.DisabledInk;
             if (Enabled && (hover || pressed)) background = ControlPaint.Dark(background, pressed ? 0.12f : 0.06f);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             using (var shape = BoardStyle.Rounded(new RectangleF(1.5f, 1.5f, Width - 3, Height - 3), 8))
-            using (var fill = new SolidBrush(background)) e.Graphics.FillPath(fill, shape);
+            using (var fill = new SolidBrush(background))
+            {
+                e.Graphics.FillPath(fill, shape);
+                if (outlined)
+                    using (var border = new Pen(BoardStyle.FieldBorder)) e.Graphics.DrawPath(border, shape);
+            }
             TextFormatFlags flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis;
             if (!ShowKeyboardCues) flags |= TextFormatFlags.HidePrefix;
             TextRenderer.DrawText(e.Graphics, Text, Font, Rectangle.Inflate(ClientRectangle, -8, 0), foreground, flags);

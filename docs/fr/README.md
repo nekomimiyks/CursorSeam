@@ -16,13 +16,11 @@ Téléchargez puis exécutez `CursorSeam-…-Setup.exe` depuis la [dernière ver
 2. Cliquez sur **Calibrer la taille**, puis faites glisser un bord ou un coin pour ajuster la taille réelle. Maintenez Maj enfoncée pendant le déplacement pour aligner les bords voisins.
 3. Cliquez sur **Enregistrer les réglages**, puis faites passer le pointeur d’un écran à l’autre pour vérifier le résultat.
 
-## Nouveautés de la version 1.1.4
+## Nouveautés de la version 1.1.5
 
-La nouvelle icône montre deux écrans larges de tailles différentes et un pointeur blanc sur fond bleu ciel.
+La zone des paramètres a été réorganisée. Dans une fenêtre large, le choix de la langue et les boutons de sauvegarde, de restauration et de suppression des paramètres s’affichent sur la même ligne. Dans une fenêtre étroite, les boutons passent à la ligne suivante. L’icône utilise désormais un fond bleu ciel vif.
 
 **À propos**, en bas à droite, affiche la version en cours d’exécution et les liens vers les applications publiques sur GitHub et Microsoft Store. Si l’application Microsoft Store ne peut pas démarrer, la liste s’ouvre dans le navigateur par défaut.
-
-![À propos de CursorSeam](about.png)
 
 ## Sauvegarder et restaurer les réglages
 

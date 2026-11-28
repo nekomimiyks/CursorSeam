@@ -16,13 +16,11 @@ Download and run `CursorSeam-…-Setup.exe` from the [latest release](https://gi
 2. Select **Calibrate size**, then drag an edge or corner to match the monitor's physical size. Hold Shift while dragging to snap to a neighboring edge.
 3. Select **Save settings**, then move the pointer across a display boundary to check the result.
 
-## What’s new in 1.1.4
+## What’s new in 1.1.5
 
-The new icon pairs two widescreen monitors of different sizes with a white pointer on a light-blue background.
+The settings area has been reorganized. The language selector and the backup, restore, and delete buttons share a row in wide windows. In narrow windows, the buttons move to the next row. The app icon now has a bright sky-blue background.
 
 **About**, in the lower-right corner, shows the running version and links to the publisher’s GitHub and Microsoft Store apps. If the Store app cannot launch, the Store link opens in the default browser.
-
-![About CursorSeam](about.png)
 
 ## Back up and restore settings
 

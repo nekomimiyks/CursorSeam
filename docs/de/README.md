@@ -16,13 +16,11 @@ Lade `CursorSeam-…-Setup.exe` aus der [neuesten Version](https://github.com/ne
 2. Wählen Sie **Größe kalibrieren** und ziehen Sie an einer Kante oder Ecke, bis die Größe stimmt. Halten Sie beim Ziehen die Umschalttaste gedrückt, um an einer benachbarten Kante einzurasten.
 3. Klicken Sie auf **Einstellungen speichern** und bewegen Sie den Mauszeiger über eine Bildschirmkante, um das Ergebnis zu prüfen.
 
-## Neu in 1.1.4
+## Neu in 1.1.5
 
-Das neue Icon zeigt zwei unterschiedlich große Breitbildmonitore und einen weißen Mauszeiger auf hellblauem Hintergrund.
+Der Einstellungsbereich wurde neu angeordnet. In breiten Fenstern stehen die Sprachauswahl und die Schaltflächen zum Sichern, Wiederherstellen und Löschen von Einstellungen in einer Zeile. In schmalen Fenstern rutschen die Schaltflächen in die nächste Zeile. Das App-Symbol hat jetzt einen leuchtend himmelblauen Hintergrund.
 
 Unter **Über die App** unten rechts findest du die laufende Version und Links zu den öffentlichen Apps auf GitHub und im Microsoft Store. Kann die Store-App nicht starten, öffnet sich die Liste im Standardbrowser.
-
-![Über CursorSeam](about.png)
 
 ## Einstellungen sichern und wiederherstellen
 
